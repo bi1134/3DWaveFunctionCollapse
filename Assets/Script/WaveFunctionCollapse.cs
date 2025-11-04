@@ -17,7 +17,6 @@ public class WaveFunctionCollapse : MonoBehaviour
     public List<Cell> gridComponents; // all cell instances in the grid
     public Cell cellObj; // base cell prefab
     public Tile backupTile; // used if a cell fails to collapse
-    public int cellSize = 1; // spacing between cells
 
     private int iterationCount = 0;
 
@@ -33,12 +32,12 @@ public class WaveFunctionCollapse : MonoBehaviour
         {
             for (int x = 0; x < dimensions; x++)
             {
-                Vector3Int cellCord = new Vector3Int(x, 0, y);
-                Vector3 worldPos = grid.CellToWorld(cellCord);
+                Vector3Int cellPos = new Vector3Int(x, 0, y);
+                Vector3 worldPos = grid.CellToWorld(cellPos);
 
                 // Place cell at world position with spacing
                 Cell newCell = Instantiate(cellObj, worldPos, Quaternion.identity, transform);
-                newCell.CreateCell(false, tileObjects); // initialize with all tile options
+                newCell.CreateCell(false, tileObjects, cellPos); // initialize with all tile options
 
                 gridComponents.Add(newCell);
             }
