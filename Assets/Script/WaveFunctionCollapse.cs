@@ -10,6 +10,8 @@ using System.Linq;
 /// </summary>
 public class WaveFunctionCollapse : MonoBehaviour
 {
+    [SerializeField] private Grid grid;
+
     public int dimensions; // number of cells along one axis (grid is square)
     public Tile[] tileObjects; // list of all available tile prefabs
     public List<Cell> gridComponents; // all cell instances in the grid
@@ -31,9 +33,11 @@ public class WaveFunctionCollapse : MonoBehaviour
         {
             for (int x = 0; x < dimensions; x++)
             {
+                Vector3Int cellCord = new Vector3Int(x, 0, y);
+                Vector3 worldPos = grid.CellToWorld(cellCord);
+
                 // Place cell at world position with spacing
-                Vector3 position = new Vector3(x * cellSize, 0, y * cellSize);
-                Cell newCell = Instantiate(cellObj, position, Quaternion.identity);
+                Cell newCell = Instantiate(cellObj, worldPos, Quaternion.identity, transform);
                 newCell.CreateCell(false, tileObjects); // initialize with all tile options
 
                 gridComponents.Add(newCell);
@@ -94,7 +98,7 @@ public class WaveFunctionCollapse : MonoBehaviour
         Tile foundTile = cellToCollapse.tileOptions[0];
 
         // Instantiate the tile with its rotation
-        Instantiate(foundTile, cellToCollapse.transform.position, foundTile.transform.rotation);
+        Instantiate(foundTile, cellToCollapse.transform.position, foundTile.transform.rotation, cellToCollapse.transform);
 
         UpdateGeneration();
     }
