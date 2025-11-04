@@ -573,7 +573,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35ed9cd86b6c4674ab35dbfab4f5951f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaveFunctionCollapse
-  dimentions: 10
+  dimensions: 20
   tileObjects:
   - {fileID: -3953170281125587381, guid: 4d3ff607f6361574dbed72753a117b4b, type: 3}
   - {fileID: -8714197299718595883, guid: fed564e62ec7aa7488a73d6dbdf7cc32, type: 3}

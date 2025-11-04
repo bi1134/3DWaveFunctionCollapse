@@ -10,7 +10,7 @@ using System.Linq;
 /// </summary>
 public class WaveFunctionCollapse : MonoBehaviour
 {
-    public int dimentions; // number of cells along one axis (grid is square)
+    public int dimensions; // number of cells along one axis (grid is square)
     public Tile[] tileObjects; // list of all available tile prefabs
     public List<Cell> gridComponents; // all cell instances in the grid
     public Cell cellObj; // base cell prefab
@@ -27,9 +27,9 @@ public class WaveFunctionCollapse : MonoBehaviour
 
     private void InitializeGrid()
     {
-        for (int y = 0; y < dimentions; y++)
+        for (int y = 0; y < dimensions; y++)
         {
-            for (int x = 0; x < dimentions; x++)
+            for (int x = 0; x < dimensions; x++)
             {
                 // Place cell at world position with spacing
                 Vector3 position = new Vector3(x * cellSize, 0, y * cellSize);
@@ -106,11 +106,11 @@ public class WaveFunctionCollapse : MonoBehaviour
     {
         List<Cell> newGenerationCells = new List<Cell>(gridComponents);
 
-        for (int y = 0; y < dimentions; y++)
+        for (int y = 0; y < dimensions; y++)
         {
-            for (int x = 0; x < dimentions; x++)
+            for (int x = 0; x < dimensions; x++)
             {
-                var index = x + (y * dimentions);
+                var index = x + (y * dimensions);
 
                 if (gridComponents[index].collapsed)
                 {
@@ -118,96 +118,82 @@ public class WaveFunctionCollapse : MonoBehaviour
                 }
                 else
                 {
-                    // Start with all tile options
                     List<Tile> options = new List<Tile>(tileObjects);
 
-                    // --- UP ---
-                    // We are checking cell ABOVE (y - 1), so:
-                    // Check what that cell allows BELOW (downNeighbors)
-                    if (y < dimentions - 1)
+                    // --- UP: look at tile ABOVE (y + 1), check what it allows BELOW
+                    if (y < dimensions - 1)
                     {
-                        Cell down = gridComponents[x + ((y + 1) * dimentions)];
+                        Cell above = gridComponents[x + (y + 1) * dimensions];
                         List<Tile> validOptions = new List<Tile>();
 
-                        foreach (Tile possibleOptions in down.tileOptions)
+                        foreach (Tile possible in above.tileOptions)
                         {
-                            int validIndex = Array.FindIndex(tileObjects, obj => obj == possibleOptions);
-                            Tile[] valid = tileObjects[validIndex].upNeighbors;
+                            var valid = possible.downNeighbors;
                             validOptions = validOptions.Concat(valid).ToList();
                         }
 
                         CheckValidity(options, validOptions);
                     }
 
-                    // --- DOWN ---
-                    // We are checking cell BELOW (y + 1), so:
-                    // Check what that cell allows ABOVE (upNeighbors)
+                    // --- DOWN: look at tile BELOW (y - 1), check what it allows ABOVE
                     if (y > 0)
                     {
-                        Cell up = gridComponents[x + ((y - 1) * dimentions)];
+                        Cell below = gridComponents[x + (y - 1) * dimensions];
                         List<Tile> validOptions = new List<Tile>();
 
-                        foreach (Tile possibleOptions in up.tileOptions)
+                        foreach (Tile possible in below.tileOptions)
                         {
-                            int validIndex = Array.FindIndex(tileObjects, obj => obj == possibleOptions);
-                            Tile[] valid = tileObjects[validIndex].downNeighbors;
+                            var valid = possible.upNeighbors;
                             validOptions = validOptions.Concat(valid).ToList();
                         }
 
                         CheckValidity(options, validOptions);
                     }
 
-                    // --- LEFT ---
-                    // We are checking cell to the RIGHT (x + 1), so:
-                    // Check what that cell allows to the LEFT (rightNeighbors)
+                    // --- LEFT: look at tile LEFT (x - 1), check what it allows RIGHT
                     if (x > 0)
                     {
-                        Cell left = gridComponents[(x - 1) + (y * dimentions)];
+                        Cell left = gridComponents[(x - 1) + y * dimensions];
                         List<Tile> validOptions = new List<Tile>();
 
-                        foreach (Tile neighborTile in left.tileOptions)
+                        foreach (Tile possible in left.tileOptions)
                         {
-                            // Check what that tile allows to its right
-                            Tile[] valid = neighborTile.rightNeighbors;
+                            var valid = possible.rightNeighbors;
                             validOptions = validOptions.Concat(valid).ToList();
                         }
 
                         CheckValidity(options, validOptions);
                     }
 
-                    // --- RIGHT ---
-                    // We are checking cell to the LEFT (x - 1), so:
-                    // Check what that cell allows to the RIGHT (leftNeighbors)
-                    if (x < dimentions - 1)
+                    // --- RIGHT: look at tile RIGHT (x + 1), check what it allows LEFT
+                    if (x < dimensions - 1)
                     {
-                        Cell right = gridComponents[(x + 1) + (y * dimentions)];
+                        Cell right = gridComponents[(x + 1) + y * dimensions];
                         List<Tile> validOptions = new List<Tile>();
 
-                        foreach (Tile neighborTile in right.tileOptions)
+                        foreach (Tile possible in right.tileOptions)
                         {
-                            // Check what that tile allows to its left
-                            Tile[] valid = neighborTile.leftNeighbors;
+                            var valid = possible.leftNeighbors;
                             validOptions = validOptions.Concat(valid).ToList();
                         }
 
                         CheckValidity(options, validOptions);
                     }
 
-                    // Set new filtered options to this cell
-                    Tile[] newTileList = options.ToArray();
-                    newGenerationCells[index].RecreateCell(newTileList);
+                    // Apply updated options to this cell
+                    newGenerationCells[index].RecreateCell(options.ToArray());
                 }
             }
         }
 
-        // Apply updated grid
         gridComponents = newGenerationCells;
 
-        if (iterationCount < dimentions * dimentions)
+        if (iterationCount < dimensions * dimensions)
         {
             StartCoroutine(CheckEntropy());
         }
     }
+
 
     /// <summary>
     /// Removes tile options that are not in the list of valid neighbors.
