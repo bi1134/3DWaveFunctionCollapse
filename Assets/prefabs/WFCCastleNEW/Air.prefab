@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8538687163698380057
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6955139019266580263}
+  - component: {fileID: 4255280448462116849}
+  - component: {fileID: -6118360965788740375}
+  m_Layer: 0
+  m_Name: Air
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &6955139019266580263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8538687163698380057}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &4255280448462116849
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8538687163698380057}
+  m_Mesh: {fileID: 0}
+--- !u!114 &-6118360965788740375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8538687163698380057}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e16f7e209a6b86c4a90fd758a944adcb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WFC_Sudoku.WFCModule
+  category: General
+  role: 3
+  spawnWeight: 5
+  rightSocket: 0
+  leftSocket: 0
+  frontSocket: 0
+  backSocket: 0
+  topSocket: 0
+  bottomSocket: 0
+  rightNeighbors:
+  - {fileID: -6118360965788740375}
+  - {fileID: 799062685934277942, guid: 4960a94f27b2d5f4ebb7b3e2f625e8ac, type: 3}
+  - {fileID: -3174842398064642155, guid: c85a504193a889e4bb6c85fa8938af92, type: 3}
+  - {fileID: 8906962483982587844, guid: d58340db7ccac594a9a9d4e164f5c6b8, type: 3}
+  - {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+  - {fileID: 4218772783735695657, guid: 3df8c54e4d2918d4686f8dd630d3b7dd, type: 3}
+  leftNeighbors:
+  - {fileID: -6118360965788740375}
+  - {fileID: 799062685934277942, guid: 4960a94f27b2d5f4ebb7b3e2f625e8ac, type: 3}
+  - {fileID: -3174842398064642155, guid: c85a504193a889e4bb6c85fa8938af92, type: 3}
+  - {fileID: 8906962483982587844, guid: d58340db7ccac594a9a9d4e164f5c6b8, type: 3}
+  - {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+  - {fileID: 4218772783735695657, guid: 3df8c54e4d2918d4686f8dd630d3b7dd, type: 3}
+  frontNeighbors:
+  - {fileID: -6118360965788740375}
+  - {fileID: -2459406481046124169, guid: 7aabe13869d07b045be3f7d175678c4c, type: 3}
+  - {fileID: -723105356386071205, guid: ff59dc961bc0ec942b0b8540a27064e2, type: 3}
+  - {fileID: 2106427290120454151, guid: 3e9f9baef00da5d41a08b18880dbbef5, type: 3}
+  - {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+  - {fileID: 4218772783735695657, guid: 3df8c54e4d2918d4686f8dd630d3b7dd, type: 3}
+  backNeighbors:
+  - {fileID: -6118360965788740375}
+  - {fileID: -2459406481046124169, guid: 7aabe13869d07b045be3f7d175678c4c, type: 3}
+  - {fileID: -723105356386071205, guid: ff59dc961bc0ec942b0b8540a27064e2, type: 3}
+  - {fileID: 2106427290120454151, guid: 3e9f9baef00da5d41a08b18880dbbef5, type: 3}
+  - {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+  - {fileID: 4218772783735695657, guid: 3df8c54e4d2918d4686f8dd630d3b7dd, type: 3}
+  topNeighbors:
+  - {fileID: -6118360965788740375}
+  bottomNeighbors:
+  - {fileID: -6118360965788740375}
+  - {fileID: -723105356386071205, guid: ff59dc961bc0ec942b0b8540a27064e2, type: 3}
+  - {fileID: 2106427290120454151, guid: 3e9f9baef00da5d41a08b18880dbbef5, type: 3}
+  - {fileID: -3174842398064642155, guid: c85a504193a889e4bb6c85fa8938af92, type: 3}
+  - {fileID: 8906962483982587844, guid: d58340db7ccac594a9a9d4e164f5c6b8, type: 3}
+  variants: []
