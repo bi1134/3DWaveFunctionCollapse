@@ -98,15 +98,56 @@ namespace WFC_Sudoku
             }
 
             // 4. Initialize Solver
-            solver.Initialize(size, allModules, unityGrid, cellPrefab, cellAlignment, this, container);
-
-            // 4. Apply Layers (Pre-Collapse) & Strict Height
-            HashSet<int> activeYLevels = new HashSet<int>();
+            HashSet<int> activeYLevels = null;
             if (strictLayerHeight)
             {
+                activeYLevels = new HashSet<int>();
                 foreach(var layer in buildLayers) 
                     if(layer.active) activeYLevels.Add(layer.yOffset);
             }
+            
+            solver.Initialize(size, allModules, unityGrid, cellPrefab, cellAlignment, this, container, activeYLevels);
+            
+            // Listen for completion
+            solver.OnFinished = () => {
+                WFCEvent.TriggerChunkGenerated(this);
+            };
+
+            // 5. Apply Map Constraints (Pre-Collapse)
+            ApplyBlueprints(size);
+
+            // 6. Run
+            StartCoroutine(solver.RunWFC());
+        }
+        
+        public WFCBlueprintLayer GetBlueprint(string name)
+        {
+            return definedBlueprints.Find(b => b.layerName == name);
+        }
+        
+        // Editor Helper
+        public void ExecuteAllBlueprints()
+        {
+             int w = gridSize.x;
+             int h = gridSize.z;
+             List<WFCBlueprintLayer> context = new List<WFCBlueprintLayer>();
+
+             foreach(var bp in definedBlueprints)
+             {
+                 if(bp.active)
+                 {
+                     bp.Generate(w, h, context);
+                     context.Add(bp);
+                 }
+             }
+        }
+
+        private void ApplyBlueprints(Vector3Int size)
+        {
+            // Apply Layers (Pre-Collapse) & Strict Height
+            // Apply Layers (Pre-Collapse) & Strict Height
+            // Note: strict check is now handled during Initialization (Sparse Grid)
+
 
             foreach(var layer in buildLayers)
             {
@@ -135,47 +176,16 @@ namespace WFC_Sudoku
                 }
             }
 
-            // Strict Layer Logic: Loop through ALL grid cells. If their Y is NOT in activeYLevels, FORCE EMPTY.
-            if (activeYLevels.Count > 0 && defaultEmptyModule != null)
+            // Strict Layer Logic: Loop REMOVED. 
+            // We now skip creating cells at invalid Y levels in Solver.Initialize
+            if (strictLayerHeight && defaultEmptyModule == null)
             {
-                 // We need to iterate the FULL grid volume
-                 for(int x=0; x<size.x; x++)
-                 {
-                     for(int z=0; z<size.z; z++)
-                     {
-                         for(int y=0; y<size.y; y++)
-                         {
-                             if (!activeYLevels.Contains(y))
-                             {
-                                 Vector3Int pos = new Vector3Int(x, y, z);
-                                 // Check if we already forced something? (Unlikely if Y is not in active levels)
-                                 solver.ForceCollapse(pos, defaultEmptyModule);
-                             }
-                         }
-                     }
-                 }
-            }
-            else if (strictLayerHeight && defaultEmptyModule == null)
-            {
-                Debug.LogWarning("WFCBuilder: Strict Layer Height is ON, but 'Default Empty Module' is missing!");
+                 // Debug.LogWarning("WFCBuilder: Strict Layer Height is ON (Sparse Mode)");
             }
 
             // 5. Run Solver
             StartCoroutine(solver.RunWFC());
         }
-        
-        public WFCBlueprintLayer GetBlueprint(string name)
-        {
-            return definedBlueprints.Find(b => b.layerName == name);
-        }
-        
-        // Editor Helper
-        public void ExecuteAllBlueprints()
-        {
-             foreach(var bp in definedBlueprints)
-             {
-                 bp.Generate(definedBlueprints);
-             }
-        }
+
     }
 }

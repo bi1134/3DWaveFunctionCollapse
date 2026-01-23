@@ -31,7 +31,7 @@ namespace WFC_Sudoku
             }
         }
 
-        public static void ResolveVisualForCell(WFCCell cell, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize)
+        public static void ResolveVisualForCell(WFCCell cell, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize, Func<Vector3Int, WFCCell> globalLookup = null, Vector2Int chunkCoord = default(Vector2Int))
         {
             if (cell.possibleModules.Count != 1) return; // Not collapsed/initialized properly
             WFCModule archetype = cell.possibleModules[0];
@@ -43,7 +43,7 @@ namespace WFC_Sudoku
             List<WFCVariant> validVariants = new List<WFCVariant>();
             foreach (var variant in archetype.variants)
             {
-                if (CheckVariantRules(cell, variant, getNeighbor, gridSize))
+                if (CheckVariantRules(cell, variant, getNeighbor, gridSize, globalLookup, chunkCoord))
                 {
                     validVariants.Add(variant);
                 }
@@ -60,7 +60,7 @@ namespace WFC_Sudoku
             }
         }
 
-        private static bool CheckVariantRules(WFCCell cell, WFCVariant variant, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize)
+        private static bool CheckVariantRules(WFCCell cell, WFCVariant variant, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize, Func<Vector3Int, WFCCell> globalLookup, Vector2Int chunkCoord)
         {
             // Height Check
             if (variant.limitHeight)
@@ -73,7 +73,7 @@ namespace WFC_Sudoku
             foreach (var rule in variant.rules)
             {
                 Vector3Int targetPos = cell.gridPosition + rule.direction;
-                SocketID neighborSocket = GetSocketAt(targetPos, rule.direction * -1, getNeighbor, gridSize); 
+                SocketID neighborSocket = GetSocketAt(cell, rule.direction, getNeighbor, gridSize, globalLookup, chunkCoord); 
 
                 bool match = (neighborSocket == rule.requiredSocketID);
                 if (rule.mustNotMatch) match = !match;
@@ -83,28 +83,44 @@ namespace WFC_Sudoku
             return true;
         }
 
-        private static SocketID GetSocketAt(Vector3Int pos, Vector3Int facingUs, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize)
+        private static SocketID GetSocketAt(WFCCell originCell, Vector3Int direction, Func<Vector3Int, WFCCell> getNeighbor, Vector3Int gridSize, Func<Vector3Int, WFCCell> globalLookup, Vector2Int chunkCoord)
         {
-            // Out of bounds = Air
-            // If gridSize is Zero (infinite mode?), we might skip this check, but for now strict check:
-            if (gridSize != Vector3Int.zero && (pos.x < 0 || pos.x >= gridSize.x ||
-                pos.y < 0 || pos.y >= gridSize.y ||
-                pos.z < 0 || pos.z >= gridSize.z))
+            Vector3Int targetPos = originCell.gridPosition + direction;
+            
+            bool outOfBounds = false;
+            if (gridSize != Vector3Int.zero && (targetPos.x < 0 || targetPos.x >= gridSize.x ||
+                targetPos.y < 0 || targetPos.y >= gridSize.y ||
+                targetPos.z < 0 || targetPos.z >= gridSize.z))
             {
-                return SocketID.Air;
+                outOfBounds = true;
             }
 
-            WFCCell neighbor = getNeighbor(pos);
-            
-            // If neighbor exists but hasn't been placed/collapsed yet -> Treat as Air?
-            // Or if it's explicitly "Empty" module?
-            // For now: null or uncollapsed = Air
+            WFCCell neighbor = null;
+            if (!outOfBounds)
+            {
+                 neighbor = getNeighbor(targetPos);
+            }
+            else if (globalLookup != null)
+            {
+                // INTEGER MATH LOOKUP
+                // GlobalPos = (ChunkCoord * ChunkSize) + LocalPos + Direction
+                // We assume Standard Tiling where Chunks are size of GridSize.
+                
+                int globX = (chunkCoord.x * gridSize.x) + originCell.gridPosition.x + direction.x;
+                int globY = originCell.gridPosition.y + direction.y; // Y is usually shared/not chunked vertically here
+                int globZ = (chunkCoord.y * gridSize.z) + originCell.gridPosition.z + direction.z; // chunkCoord.y is global Z in 2D grid
+                
+                neighbor = globalLookup(new Vector3Int(globX, globY, globZ));
+            }
+
+            if (neighbor == null && outOfBounds && globalLookup == null) return SocketID.Air;
             if (neighbor == null || !neighbor.collapsed || neighbor.possibleModules.Count != 1) return SocketID.Air;
 
             WFCModule mod = neighbor.possibleModules[0];
             if (mod == null) return SocketID.Air;
 
-            // Return the socket on the face pointing towards us
+            Vector3Int facingUs = direction * -1;
+
             if (facingUs == Vector3Int.right) return mod.rightSocket;
             if (facingUs == Vector3Int.left) return mod.leftSocket;
             if (facingUs == Vector3Int.up) return mod.topSocket;

@@ -14,6 +14,7 @@ namespace WFC_Sudoku
         public Vector3 cellAlignment;
         public WFCCell cellPrefab;
         public Grid unityGrid;
+        public WFCBuilder builder;
 
         public int maxRetries = 5; 
 
@@ -21,6 +22,7 @@ namespace WFC_Sudoku
         [Header("Runtime")]
         public List<WFCModule> allModules;
         public List<WFCCell> cells = new List<WFCCell>();
+        public Dictionary<Vector3Int, WFCCell> cellMap = new Dictionary<Vector3Int, WFCCell>(); // Optimization
         public Queue<WFCCell> initialQueue = new Queue<WFCCell>();
 
         // --- API FOR WFCBUILDER ---
@@ -29,84 +31,90 @@ namespace WFC_Sudoku
         private Transform container;
 
         // --- API FOR WFCBUILDER ---
-        
-        public void Initialize(Vector3Int size, List<WFCModule> modules, Grid grid, WFCCell prefab, Vector3 alignment, MonoBehaviour ctx, Transform spawnContainer)
+
+        public void Initialize(Vector3Int size, List<WFCModule> modules, Grid grid, WFCCell prefab, Vector3 alignment, WFCBuilder b, Transform containerStr, HashSet<int> restrictedYLevels = null)
         {
-            this.context = ctx;
-            this.container = spawnContainer;
             this.gridSize = size;
             this.allModules = modules;
             this.unityGrid = grid;
             this.cellPrefab = prefab;
             this.cellAlignment = alignment;
-            
-            initialQueue.Clear();
-            constraints.Clear();
+            this.builder = b;
+            this.container = containerStr;
 
-            int targetCount = gridSize.x * gridSize.y * gridSize.z;
+            int targetCount = gridSize.x * gridSize.y * gridSize.z; // Max possible
+            if (restrictedYLevels != null)
+            {
+                // If strict, calculate exact count
+                targetCount = gridSize.x * gridSize.z * restrictedYLevels.Count;
+            }
 
-            // REUSE LOGIC:
             if (cells.Count == targetCount && cells.All(c => c != null))
             {
-                 // Reuse
-                 // Debug.Log("Reusing existing WFC Cells...");
-                 for (int i = 0; i < cells.Count; i++)
-                 {
-                     WFCCell c = cells[i];
-                     // Reset State
-                     c.Initialize(allModules, c.gridPosition, gridSize.y); // visual cleanup happens here now
-                     
-                     // Ensure Parent (Migrate if needed)
-                     if (c.transform.parent != container) c.transform.SetParent(container);
-                 }
+                // Reuse
+                // Debug.Log("Reusing existing WFC Cells...");
+                for (int i = 0; i < cells.Count; i++)
+                {
+                    WFCCell c = cells[i];
+                    // Reset State
+                    c.Initialize(allModules, c.gridPosition, gridSize.y); // visual cleanup happens here now
+
+                    // Ensure Parent (Migrate if needed)
+                    if (c.transform.parent != container) c.transform.SetParent(container);
+
+                    if (!cellMap.ContainsKey(c.gridPosition)) cellMap.Add(c.gridPosition, c);
+                }
             }
             else
             {
-                 // Full Rebuild
-                 // Clean Visualization
-                 if (unityGrid != null)
-                 {
-                    List<GameObject> toDestroy = new List<GameObject>();
-                    
-                    // Clean UnityGrid children
-                    foreach(Transform child in unityGrid.transform) toDestroy.Add(child.gameObject);
-                    
-                    // Clean Container children (if different)
-                    if (container != null && container != unityGrid.transform)
-                    {
-                        foreach(Transform child in container) toDestroy.Add(child.gameObject);
-                    }
+                // Create New
+                // Debug.Log($"Spawning {targetCount} WFC Cells...");
+                ClearCells(); // Helper to destroy old if mismatch
+                cells = new List<WFCCell>(targetCount);
+                cellMap.Clear();
 
-                    foreach(var go in toDestroy)
-                    {
-                        if (go == null) continue;
-                        if (Application.isPlaying) Object.Destroy(go);
-                        else Object.DestroyImmediate(go);
-                    }
-                 }
-                 cells.Clear(); // References are gone
-
-                 cells = new List<WFCCell>(targetCount); 
-
-                 for (int z = 0; z < gridSize.z; z++)
-                 {
+                for (int z = 0; z < gridSize.z; z++)
+                {
                     for (int y = 0; y < gridSize.y; y++)
                     {
+                        if (restrictedYLevels != null && !restrictedYLevels.Contains(y)) continue;
+
                         for (int x = 0; x < gridSize.x; x++)
                         {
-                             Vector3Int cellPos = new Vector3Int(x, y, z);
-                             Vector3 worldPos = (unityGrid != null) ? 
-                                unityGrid.CellToWorld(cellPos) + Vector3.Scale(unityGrid.cellSize, cellAlignment) : 
-                                new Vector3(x, y, z); // Fallback
+                            Vector3Int cellPos = new Vector3Int(x, y, z);
+                            Vector3 worldPos = (unityGrid != null) ?
+                               unityGrid.CellToWorld(cellPos) + Vector3.Scale(unityGrid.cellSize, cellAlignment) :
+                               new Vector3(x, y, z); // Fallback
 
-                             // Instantiate using Object.Instantiate since we are not a MonoBehaviour
-                             WFCCell c = Object.Instantiate(cellPrefab, worldPos, Quaternion.identity, container);
-                             c.Initialize(allModules, cellPos, gridSize.y);
-                             cells.Add(c);
+                            // Instantiate using Object.Instantiate since we are not a MonoBehaviour
+                            WFCCell c = Object.Instantiate(cellPrefab, worldPos, Quaternion.identity, container);
+                            c.Initialize(allModules, cellPos, gridSize.y);
+                            cells.Add(c);
+                            cellMap.Add(cellPos, c);
                         }
                     }
-                 }
+                }
             }
+
+            initialQueue.Clear();
+            constraints.Clear();
+        }
+
+
+        private void ClearCells()
+        {
+             if (cells != null)
+             {
+                 foreach(var c in cells)
+                 {
+                     if (c != null)
+                     {
+                         if(Application.isPlaying) Object.Destroy(c.gameObject);
+                         else Object.DestroyImmediate(c.gameObject);
+                     }
+                 }
+                 cells.Clear();
+             }
         }
 
         // Constraints Storage
@@ -179,8 +187,8 @@ namespace WFC_Sudoku
                             break; // Break inner loop to retry
                         }
 
-                        Debug.Log("WFC Complete Success!");
                         ResolveVariations();
+                        OnFinished?.Invoke();
                         yield break; // Exit EVERYTHING
                     }
 
@@ -209,12 +217,45 @@ namespace WFC_Sudoku
             Debug.LogError("WFC Failed to generate a valid grid after max retries.");
         }
 
+        public System.Func<Vector3Int, WFCCell> globalLookup; // Assigned by Builder
+        public float worldScale = 1.0f; // Assigned by Builder
+        public Vector2Int chunkCoordinate; // Assigned by Builder
+        public System.Action OnFinished;
+
+        public void RefreshVisualsOnEdge(Vector3Int direction)
+        {
+            // Iterate all cells on the specific edge and re-resolve visual
+            // Direction: Left (-1,0,0), Right (1,0,0), etc.
+            
+            // Logic: simpler to iterate ALL border cells if direction is hard?
+            // Let's do specific edge.
+            
+            int w = gridSize.x;
+            int h = gridSize.y;
+            int d = gridSize.z; // depth
+            
+            if (direction == Vector3Int.left)   for(int z=0; z<d; z++) for(int y=0; y<h; y++) ReResolve(new Vector3Int(0, y, z));
+            if (direction == Vector3Int.right)  for(int z=0; z<d; z++) for(int y=0; y<h; y++) ReResolve(new Vector3Int(w-1, y, z));
+            if (direction == Vector3Int.back)   for(int x=0; x<w; x++) for(int y=0; y<h; y++) ReResolve(new Vector3Int(x, y, 0));
+            if (direction == Vector3Int.forward)for(int x=0; x<w; x++) for(int y=0; y<h; y++) ReResolve(new Vector3Int(x, y, d-1));
+        }
+
+
         private void ResolveVariations()
         {
-            Debug.Log("Final Variation Pass...");
             foreach (var cell in cells)
             {
-                WFCVisualizer.ResolveVisualForCell(cell, GetCellAt, gridSize);
+                // We pass chunkCoordinate so Visualizer can calculate Global Grid Pos
+                WFCVisualizer.ResolveVisualForCell(cell, GetCellAt, gridSize, globalLookup, chunkCoordinate);
+            }
+        }
+        
+        private void ReResolve(Vector3Int pos)
+        {
+            WFCCell c = GetCellAt(pos);
+            if (c != null && c.collapsed)
+            {
+                 WFCVisualizer.ResolveVisualForCell(c, GetCellAt, gridSize, globalLookup, chunkCoordinate);
             }
         }
 
@@ -224,8 +265,13 @@ namespace WFC_Sudoku
         }
 
         // Helper for Visualizer callback
-        private WFCCell GetCellAt(Vector3Int pos)
+        public WFCCell GetCellAt(Vector3Int pos)
         {
+            if (cellMap != null)
+            {
+                if (cellMap.TryGetValue(pos, out WFCCell c)) return c;
+                return null;
+            }
             return cells.FirstOrDefault(c => c.gridPosition == pos);
         }
 

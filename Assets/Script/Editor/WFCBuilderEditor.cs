@@ -156,7 +156,7 @@ namespace WFC_Sudoku
             {
                 // Restore map preview if missing
                 var bp = ((WFCBuilder)target).definedBlueprints[i];
-                bp.ValidateMap();
+                bp.ValidateMap(builder.gridSize.x, builder.gridSize.z);
 
                 SerializedProperty bpProp = definedBlueprintsProp.GetArrayElementAtIndex(i);
                 // We return TRUE if we should delete this
@@ -260,7 +260,7 @@ namespace WFC_Sudoku
             if (bpProp.isExpanded)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(bpProp.FindPropertyRelative("size"));
+                // EditorGUILayout.PropertyField(bpProp.FindPropertyRelative("size")); // OBSOLETE
                 EditorGUILayout.PropertyField(bpProp.FindPropertyRelative("activeColor"));
 
                 // Modifiers List
@@ -423,6 +423,7 @@ namespace WFC_Sudoku
                 
                 // Pathfinding
                 menu.AddItem(new GUIContent("Generators/Pathfinding"), false, () => AddModifier(blueprint, typeof(PathfindingGenerator)));
+                menu.AddItem(new GUIContent("Generators/TD Path (Tower Defense)"), false, () => AddModifier(blueprint, typeof(TowerDefensePathGenerator)));
 
                 menu.AddItem(new GUIContent("Generators/Texture Input"), false, () => AddModifier(blueprint, typeof(TextureInputGenerator)));
                 
@@ -431,6 +432,7 @@ namespace WFC_Sudoku
                 menu.AddItem(new GUIContent("Modifiers/Subtract (Difference)"), false, () => AddModifier(blueprint, typeof(SubtractModifier)));
                 menu.AddItem(new GUIContent("Modifiers/Shrink (Erode)"), false, () => AddModifier(blueprint, typeof(ShrinkModifier)));
                 menu.AddItem(new GUIContent("Modifiers/Expand (Grow)"), false, () => AddModifier(blueprint, typeof(GrowModifier)));
+                menu.AddItem(new GUIContent("Modifiers/Neighbor Expansion"), false, () => AddModifier(blueprint, typeof(NeighborModifier)));
                 menu.AddItem(new GUIContent("Modifiers/Smooth"), false, () => AddModifier(blueprint, typeof(SmoothModifier)));
                 menu.AddItem(new GUIContent("Modifiers/Invert"), false, () => AddModifier(blueprint, typeof(InvertModifier)));
 
