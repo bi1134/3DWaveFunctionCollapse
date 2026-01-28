@@ -28,3 +28,10 @@ MonoBehaviour:
     modulePrefab: {fileID: -6118360965788740375, guid: 7ec189c3b661bc44283da727eb7310c7, type: 3}
     targetLayer: 0
     tolerance: 0
+  dualGridProfile:
+    fullModel: {fileID: 4782068025395586790, guid: a155822e945c03b418701c28cbbf4f5e, type: 3}
+    lShapeModel: {fileID: 4782068025395586790, guid: 1f4b34c1f66bb334e836b4f443ad9d9f, type: 3}
+    lineModel: {fileID: 4782068025395586790, guid: e166491f6584e6840a5eaa517b36b802, type: 3}
+    stitchModel: {fileID: 4782068025395586790, guid: 4b857791a365fa24da8eb9dfd36fc2b1, type: 3}
+    cornerModel: {fileID: 4782068025395586790, guid: 2ffe291ad225ce9438a706f874d1ce21, type: 3}
+    emptyModel: {fileID: 4782068025395586790, guid: 8cd0b78d87657f24483ea5b597564186, type: 3}

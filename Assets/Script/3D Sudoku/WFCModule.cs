@@ -24,6 +24,10 @@ namespace WFC_Sudoku
         [Tooltip("Higher value = More likely to appear. Lower = Rarity (e.g. Tower = 0.1)")]
         public float spawnWeight = 1.0f;
 
+        [Header("Dual Grid Settings")]
+        [Tooltip("0 = Negative/Water, 1 = Positive/Land")]
+        public int terrainType = 0;
+
         [Header("Sockets (Auto-Generation)")]
         [Tooltip("ID for the Right face.")] public SocketID rightSocket = SocketID.Air;
         [Tooltip("ID for the Left face.")] public SocketID leftSocket = SocketID.Air;

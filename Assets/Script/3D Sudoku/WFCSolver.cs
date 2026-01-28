@@ -32,7 +32,7 @@ namespace WFC_Sudoku
 
         // --- API FOR WFCBUILDER ---
 
-        public void Initialize(Vector3Int size, List<WFCModule> modules, Grid grid, WFCCell prefab, Vector3 alignment, WFCBuilder b, Transform containerStr, HashSet<int> restrictedYLevels = null)
+        public void Initialize(Vector3Int size, List<WFCModule> modules, Grid grid, WFCCell prefab, Vector3 alignment, WFCBuilder b, Transform containerStr, HashSet<int> restrictedYLevels = null, HashSet<int> dualGridYLevels = null)
         {
             this.gridSize = size;
             this.allModules = modules;
@@ -57,6 +57,8 @@ namespace WFC_Sudoku
                 {
                     WFCCell c = cells[i];
                     // Reset State
+                    bool isDual = dualGridYLevels != null && dualGridYLevels.Contains(c.gridPosition.y);
+                    c.suppressVisuals = isDual;
                     c.Initialize(allModules, c.gridPosition, gridSize.y); // visual cleanup happens here now
 
                     // Ensure Parent (Migrate if needed)
@@ -88,6 +90,8 @@ namespace WFC_Sudoku
 
                             // Instantiate using Object.Instantiate since we are not a MonoBehaviour
                             WFCCell c = Object.Instantiate(cellPrefab, worldPos, Quaternion.identity, container);
+                            bool isDual = dualGridYLevels != null && dualGridYLevels.Contains(y);
+                            c.suppressVisuals = isDual;
                             c.Initialize(allModules, cellPos, gridSize.y);
                             cells.Add(c);
                             cellMap.Add(cellPos, c);
@@ -142,6 +146,7 @@ namespace WFC_Sudoku
                     cell.possibleModules.Add(module);
                     cell.collapsed = true;
                     if (!initialQueue.Contains(cell)) initialQueue.Enqueue(cell);
+                    OnCellCollapsed?.Invoke(pos);
                 }
             }
         }
@@ -193,6 +198,7 @@ namespace WFC_Sudoku
                     }
 
                     cellToCollapse.Collapse();
+                    OnCellCollapsed?.Invoke(cellToCollapse.gridPosition);
 
                     Queue<WFCCell> queue = new Queue<WFCCell>();
                     queue.Enqueue(cellToCollapse);
@@ -221,6 +227,7 @@ namespace WFC_Sudoku
         public float worldScale = 1.0f; // Assigned by Builder
         public Vector2Int chunkCoordinate; // Assigned by Builder
         public System.Action OnFinished;
+        public System.Action<Vector3Int> OnCellCollapsed; // Dual Grid Hook
 
         public void RefreshVisualsOnEdge(Vector3Int direction)
         {

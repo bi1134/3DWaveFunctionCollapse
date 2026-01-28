@@ -76,17 +76,21 @@ namespace WFC_Sudoku
                     
                     // Y Offset
                     EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, height), yProp);
-                    rect.y += height + 5;
+                    rect.y += height + 5; // Extra gap before Dual Grid
+
+                    // Dual Grid Toggle
+                    SerializedProperty useDG = element.FindPropertyRelative("useDualGrid");
+                    if (useDG != null) 
+                    {
+                        useDG.boolValue = EditorGUI.Toggle(new Rect(rect.x, rect.y, rect.width, height), new GUIContent("Use Dual Grid"), useDG.boolValue);
+                    }
+                    
+                    rect.y += height + 15; // Significant gap before List
 
                     // Tile Presets (Weighted)
                     SerializedProperty presetsProp = element.FindPropertyRelative("presets");
                     
-                    // Simple property field for the list handles ReorderableList inside ReorderableList poorly usually,
-                    // but since PropertyField(list, true) works decently for simple internal logic...
-                    // Let's force it to expand
                     EditorGUI.PropertyField(new Rect(rect.x, rect.y, rect.width, height), presetsProp, true); 
-                    
-                    // We need to calculate height properly but for now let's trust DoLayout or check height
                     
                     rect.y += height + 5;
                     EditorGUI.indentLevel--;
@@ -100,7 +104,12 @@ namespace WFC_Sudoku
                 if (element.isExpanded)
                 {
                     float presetsHeight = EditorGUI.GetPropertyHeight(element.FindPropertyRelative("presets"), true);
-                    h += (EditorGUIUtility.singleLineHeight + 2) * 3 + 5 + presetsHeight; 
+                    // H+2 (Name) + H+2 (BP) + H+5 (Y) + H+10/15 (DG) = 4H + 20ish
+                    // Let's settle on a generous buffer
+                    float H = EditorGUIUtility.singleLineHeight;
+                    // Previous: (H*4) + 24
+                    // Fix: Increase to ensure no bottom-overlap
+                    h += (H * 4) + 40 + presetsHeight; 
                 }
                 return h;
             };

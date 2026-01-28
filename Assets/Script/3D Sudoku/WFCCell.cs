@@ -9,6 +9,9 @@ namespace WFC_Sudoku
         public bool collapsed = false;
         public List<WFCModule> possibleModules = new List<WFCModule>();
         
+        // Dual Grid Support
+        public bool suppressVisuals = false;
+
         // References for visualization
         private GameObject spawnedObject;
         public int totalGridHeight = 1;
@@ -52,15 +55,18 @@ namespace WFC_Sudoku
             collapsed = true;
 
             // Visualize
-            if (spawnedObject != null)
+            if (!suppressVisuals)
             {
-                 if (Application.isPlaying) Destroy(spawnedObject);
-                 else DestroyImmediate(spawnedObject);
+                if (spawnedObject != null)
+                {
+                     if (Application.isPlaying) Destroy(spawnedObject);
+                     else DestroyImmediate(spawnedObject);
+                }
+                spawnedObject = Instantiate(selected.gameObject, transform.position, selected.transform.rotation, transform);
+                
+                // Cleanup Name (Remove (Clone))
+                spawnedObject.name = selected.name; // Template name is already clean (e.g. Wall_Rot90)
             }
-            spawnedObject = Instantiate(selected.gameObject, transform.position, selected.transform.rotation, transform);
-            
-            // Cleanup Name (Remove (Clone))
-            spawnedObject.name = selected.name; // Template name is already clean (e.g. Wall_Rot90)
         }
 
         private GameObject currentVisualPrefab;
@@ -80,8 +86,11 @@ namespace WFC_Sudoku
             // If Cell is rotated (during WFC), we combine. If Cell is Identity, we just use prefab rotation.
             Quaternion finalRot = transform.rotation * prefab.transform.rotation;
             
-            spawnedObject = Instantiate(prefab, transform.position, finalRot, transform); 
-            spawnedObject.name = prefab.name + "_Variant";
+            if (!suppressVisuals)
+            {
+                spawnedObject = Instantiate(prefab, transform.position, finalRot, transform); 
+                spawnedObject.name = prefab.name + "_Variant";
+            }
             
             currentVisualPrefab = prefab;
         }

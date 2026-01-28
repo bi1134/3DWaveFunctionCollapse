@@ -16,6 +16,9 @@ namespace WFC_Sudoku
         [Tooltip("Shift the application of this layer up by Y")]
         public int yOffset = 0;
 
+        [Header("Visualization")]
+        public bool useDualGrid = false;
+
 
 
         [System.Serializable]

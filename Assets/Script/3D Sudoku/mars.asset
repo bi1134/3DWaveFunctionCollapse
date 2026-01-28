@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92b0cf265270d4845a3495bf9eff788f, type: 3}
+  m_Name: mars
+  m_EditorClassIdentifier: Assembly-CSharp::WFC_Sudoku.WFCTilePreset
+  modules:
+  - {fileID: -6118360965788740375, guid: 7ec189c3b661bc44283da727eb7310c7, type: 3}
+  - {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+  mapRules:
+  - active: 1
+    ruleName: wall
+    sourceColor: {r: 1, g: 1, b: 1, a: 0}
+    modulePrefab: {fileID: 7286773353159989361, guid: a7acbcae19b3d5a4caaea4c20f3e8557, type: 3}
+    targetLayer: 0
+    tolerance: 0
+  - active: 1
+    ruleName: air
+    sourceColor: {r: 0, g: 0, b: 0, a: 0}
+    modulePrefab: {fileID: -6118360965788740375, guid: 7ec189c3b661bc44283da727eb7310c7, type: 3}
+    targetLayer: 0
+    tolerance: 0
+  dualGridProfile:
+    fullModels:
+    - {fileID: 4782068025395586790, guid: 1fc29849487800d468f5eb92b772dc72, type: 3}
+    - {fileID: 2066873545593897860, guid: 01ec1072c58d5524cab3c32f67cd89f2, type: 3}
+    - {fileID: 2066873545593897860, guid: 2237cf138df4f12429c08e05b499e66f, type: 3}
+    lShapeModels:
+    - {fileID: 4782068025395586790, guid: 1b6228b91e838e44a8452b5da11d8db9, type: 3}
+    - {fileID: 4354067256566174950, guid: e25c3c39a50ee8742b9b1ae56a102704, type: 3}
+    - {fileID: 4354067256566174950, guid: 966d3f641cc61564ba8b6770a101413d, type: 3}
+    lineModels:
+    - {fileID: 4782068025395586790, guid: 61da91a4cbc9315418bbf27aacd40732, type: 3}
+    - {fileID: 188388937270743095, guid: 2fae85eff04b1a34bbd4f156e8204b82, type: 3}
+    - {fileID: 188388937270743095, guid: 215d488c22b528a43b5a306092cd19ec, type: 3}
+    - {fileID: 188388937270743095, guid: a35691ef38e212d41a3ca7bb0ef42a39, type: 3}
+    stitchModels:
+    - {fileID: 4782068025395586790, guid: aa3996e8afddbfa40abc4e9846f68e92, type: 3}
+    cornerModels:
+    - {fileID: 4782068025395586790, guid: 3d841da98ec90a048a348306a57ec5d6, type: 3}
+    - {fileID: 4684039548602008865, guid: cabb76f20615f044a857641bffe79349, type: 3}
+    - {fileID: 4684039548602008865, guid: 5de5c9f7761f7ec4eb2592b89441ecfe, type: 3}
+    - {fileID: 4684039548602008865, guid: 7463e7c7397b6c54bb2a5591964bfd15, type: 3}
+    emptyModels:
+    - {fileID: 4782068025395586790, guid: ca19db85670ee3e41916339309cdb18f, type: 3}

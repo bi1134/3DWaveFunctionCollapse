@@ -228,6 +228,7 @@ MonoBehaviour:
   category: General
   role: 0
   spawnWeight: 7
+  terrainType: 1
   rightSocket: 1
   leftSocket: 1
   frontSocket: 1

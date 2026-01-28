@@ -42,6 +42,26 @@ namespace WFC_Sudoku
                    Mathf.Abs(a.b - b.b) <= tolerance;
         }
 
+        [Header("Dual Grid Visuals")]
+        public DualGridProfile dualGridProfile;
+
+        [System.Serializable]
+        public struct DualGridProfile
+        {
+            [Tooltip("1111 - All 4 corners")]
+            public List<GameObject> fullModels;
+            [Tooltip("0111 - 3 corners (L-Shape)")]
+            public List<GameObject> lShapeModels;
+            [Tooltip("0011 - 2 Adjacent corners (Line/Half)")]
+            public List<GameObject> lineModels;
+            [Tooltip("0110 - 2 Opposite corners (Stitch/Cross)")]
+            public List<GameObject> stitchModels;
+            [Tooltip("0001 - 1 Corner")]
+            public List<GameObject> cornerModels;
+            [Tooltip("0000 - Empty")]
+            public List<GameObject> emptyModels;
+        }
+
 #if UNITY_EDITOR
         public void GenerateNeighbors()
         {

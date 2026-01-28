@@ -19,6 +19,10 @@ namespace WFC_Sudoku
         [Tooltip("Module to use for empty/undefined space.")]
         public WFCModule defaultEmptyModule; // User must assign "Empty" or "Air" logic
         
+        // [Header("Dual Grid Visualization")]
+        // useDualGrid moved to Layers
+        public WFCDualGridManager dualGridManager = new WFCDualGridManager();
+        
         [Header("Blueprints Definitions")]
         public List<WFCBlueprintLayer> definedBlueprints = new List<WFCBlueprintLayer>();
 
@@ -42,6 +46,8 @@ namespace WFC_Sudoku
         public void Generate()
         {
             // if (solver == null) solver = new WFCSolver(); // Already initialized inline
+            
+            solver.OnCellCollapsed = null; // Reset events
             
             // Validation
             if (cellPrefab == null) { Debug.LogError("WFCBuilder: Cell Prefab is missing!"); return; }
@@ -98,15 +104,45 @@ namespace WFC_Sudoku
             }
 
             // 4. Initialize Solver
+            // Cleanup previous Dual Grid visuals
+            if (dualGridManager != null) dualGridManager.Clear();
+
             HashSet<int> activeYLevels = null;
+            HashSet<int> dualGridYLevels = new HashSet<int>();
+
             if (strictLayerHeight)
             {
                 activeYLevels = new HashSet<int>();
-                foreach(var layer in buildLayers) 
-                    if(layer.active) activeYLevels.Add(layer.yOffset);
+                foreach(var layer in buildLayers)
+                {
+                    if(layer.active) 
+                    {
+                        activeYLevels.Add(layer.yOffset);
+                        if (layer.useDualGrid) dualGridYLevels.Add(layer.yOffset);
+                    }
+                }
+            }
+            else
+            {
+                // If not strict, checking for dual grid globally is harder unless we scan active layers anyway
+                foreach(var layer in buildLayers)
+                     if(layer.active && layer.useDualGrid) dualGridYLevels.Add(layer.yOffset);
             }
             
-            solver.Initialize(size, allModules, unityGrid, cellPrefab, cellAlignment, this, container, activeYLevels);
+            // Check if any layer needs Dual Grid
+            // bool anyDualGrid = buildLayers.Any(l => l.active && l.useDualGrid);
+            
+            // Initialize Solver with Dual Grid Mask
+            solver.Initialize(size, allModules, unityGrid, cellPrefab, cellAlignment, this, container, activeYLevels, dualGridYLevels);
+            
+            // Always initialize manager to ensure it has reference to container (for clearing or future use)
+            // But we only subscribe if active
+            dualGridManager.Initialize(solver, this.transform, dualGridYLevels); // Passes active levels
+            
+            if (dualGridYLevels.Count > 0)
+            {
+                solver.OnCellCollapsed += dualGridManager.UpdateAround;
+            }
             
             // Listen for completion
             solver.OnFinished = () => {
