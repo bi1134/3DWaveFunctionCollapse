@@ -70,6 +70,9 @@ namespace WFC_Sudoku
         }
 
         private GameObject currentVisualPrefab;
+        
+        // P1 FIX: Pooled list to avoid per-collapse allocation
+        private List<float> _weightsPool = new List<float>(64);
 
         public void SpawnVisual(GameObject prefab)
         {
@@ -123,14 +126,14 @@ namespace WFC_Sudoku
 
         private WFCModule SelectModuleWeighted()
         {
-            // Calculate weights
-            List<float> weights = new List<float>();
+            // P1 FIX: Reuse pooled list instead of allocating new
+            _weightsPool.Clear();
             float totalWeight = 0;
 
             foreach(var mod in possibleModules)
             {
                 float w = GetWeight(mod);
-                weights.Add(w);
+                _weightsPool.Add(w);
                 totalWeight += w;
             }
 
@@ -140,7 +143,7 @@ namespace WFC_Sudoku
 
             for(int i=0; i < possibleModules.Count; i++)
             {
-                currentSum += weights[i];
+                currentSum += _weightsPool[i];
                 if(randomValue <= currentSum)
                 {
                     return possibleModules[i];

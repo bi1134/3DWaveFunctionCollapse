@@ -1759,6 +1759,7 @@ MonoBehaviour:
     cells: []
     worldScale: 1
     chunkCoordinate: {x: 0, y: 0}
+  useBurstAcceleration: 1
   references:
     version: 2
     RefIds:

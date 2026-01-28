@@ -149,12 +149,13 @@ namespace WFC_Sudoku
             EditorGUILayout.Space(5);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("strictLayerHeight"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("defaultEmptyModule"));
-
-            EditorGUILayout.Space(10);
             
-            // Blueprints and Layers are below
-            // EditorGUILayout.PropertyField(serializedObject.FindProperty("maxRetries"));
-            // EditorGUILayout.PropertyField(serializedObject.FindProperty("fixedBlueprints"), true); 
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Performance", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("useBurstAcceleration"), 
+                new GUIContent("Use Burst Acceleration", "Use Jobs + Burst for faster WFC generation. Supports up to 64 modules."));
+
+            EditorGUILayout.Space(10); 
 
             EditorGUILayout.Space(20);
 

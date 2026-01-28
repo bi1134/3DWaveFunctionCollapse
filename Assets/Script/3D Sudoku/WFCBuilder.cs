@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using WFC_Sudoku.Jobs;
 
 namespace WFC_Sudoku
 {
@@ -30,6 +31,10 @@ namespace WFC_Sudoku
         public List<WFCBuildLayer> buildLayers = new List<WFCBuildLayer>();
 
         public WFCSolver solver = new WFCSolver();
+        
+        [Header("Performance")]
+        [Tooltip("Use Jobs + Burst for faster WFC generation. Requires Burst package.")]
+        public bool useBurstAcceleration = false;
 
 
         private void Awake()
@@ -153,7 +158,22 @@ namespace WFC_Sudoku
             ApplyBlueprints(size);
 
             // 6. Run
-            StartCoroutine(solver.RunWFC());
+            if (useBurstAcceleration)
+            {
+                var burstRunner = new WFCBurstRunner(
+                    solver.cells,
+                    solver.allModules,
+                    GetConstraintsFromSolver(),
+                    size,
+                    solver.OnFinished,
+                    solver.OnCellCollapsed
+                );
+                StartCoroutine(burstRunner.Run(solver.maxRetries));
+            }
+            else
+            {
+                StartCoroutine(solver.RunWFC());
+            }
         }
         
         public WFCBlueprintLayer GetBlueprint(string name)
@@ -220,8 +240,23 @@ namespace WFC_Sudoku
             }
 
             // 5. Run Solver
-            StartCoroutine(solver.RunWFC());
+            // NOTE: Moved to Generate() to support Burst toggle
         }
 
+        // Helper to get constraints for Burst runner
+        private Dictionary<Vector3Int, WFCModule> GetConstraintsFromSolver()
+        {
+            // Build constraints from what was applied via ForceCollapse
+            // Since constraints is private in solver, we rebuild from initial queue state
+            var result = new Dictionary<Vector3Int, WFCModule>();
+            foreach (var cell in solver.cells)
+            {
+                if (cell.collapsed && cell.possibleModules.Count > 0)
+                {
+                    result[cell.gridPosition] = cell.possibleModules[0];
+                }
+            }
+            return result;
+        }
     }
 }

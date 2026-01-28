@@ -182,8 +182,8 @@ namespace WFC_Sudoku
                 case 6:  prefab = GetRandom(preset.dualGridProfile.stitchModels); rotY = 90; break; // Stitch 2 (TR+BL)
             }
             
-            // DEBUG LOG
-            if (prefab != null) Debug.Log($"DG spawn at {dualPos}: Mask={mask} (TL{cTL} TR{cTR} BL{cBL} BR{cBR}) -> {prefab.name}");
+            // DEBUG LOG REMOVED - Was consuming 24+ seconds (172,812 calls)
+            // if (prefab != null) Debug.Log($"DG spawn at {dualPos}: Mask={mask} (TL{cTL} TR{cTR} BL{cBL} BR{cBR}) -> {prefab.name}");
             
             SpawnVisual(dualPos, prefab, rotY);
         }

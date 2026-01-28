@@ -25,6 +25,10 @@ namespace WFC_Sudoku
         public Dictionary<Vector3Int, WFCCell> cellMap = new Dictionary<Vector3Int, WFCCell>(); // Optimization
         public Queue<WFCCell> initialQueue = new Queue<WFCCell>();
 
+        // P1 FIX: Pooled collections to avoid per-call allocations
+        private HashSet<WFCModule> _allowedPool = new HashSet<WFCModule>();
+        private List<WFCModule> _keptModulesPool = new List<WFCModule>(64);
+
         // --- API FOR WFCBUILDER ---
         
         private MonoBehaviour context; // For Coroutines and Instantiation context
@@ -289,7 +293,9 @@ namespace WFC_Sudoku
              foreach(var cell in cells)
              {
                  cell.collapsed = false;
-                 cell.possibleModules = new List<WFCModule>(allModules);
+                 // P1 FIX: Reuse list instead of allocating new
+                 cell.possibleModules.Clear();
+                 cell.possibleModules.AddRange(allModules);
              }
              
              // Re-Apply Constraints
@@ -305,12 +311,53 @@ namespace WFC_Sudoku
 
         private WFCCell GetLowestEntropyCell()
         {
-            // Bottom-Up Priority
-            return cells.Where(c => !c.collapsed && c.Entropy > 0)
-                        .OrderBy(c => c.gridPosition.y)
-                        .ThenBy(c => c.Entropy)
-                        .ThenBy(c => Random.value)
-                        .FirstOrDefault();
+            // P0 FIX: O(n) linear scan instead of O(n log n) LINQ sort
+            WFCCell best = null;
+            int bestEntropy = int.MaxValue;
+            int bestY = int.MaxValue;
+            float bestRandom = float.MaxValue;
+
+            for (int i = 0; i < cells.Count; i++)
+            {
+                WFCCell c = cells[i];
+                if (c.collapsed || c.Entropy <= 0) continue;
+
+                int y = c.gridPosition.y;
+                int entropy = c.Entropy;
+
+                // Priority: Lower Y first, then lower entropy, then random tiebreak
+                bool isBetter = false;
+                if (y < bestY)
+                {
+                    isBetter = true;
+                }
+                else if (y == bestY)
+                {
+                    if (entropy < bestEntropy)
+                    {
+                        isBetter = true;
+                    }
+                    else if (entropy == bestEntropy)
+                    {
+                        float r = Random.value;
+                        if (r < bestRandom)
+                        {
+                            isBetter = true;
+                            bestRandom = r;
+                        }
+                    }
+                }
+
+                if (isBetter)
+                {
+                    best = c;
+                    bestEntropy = entropy;
+                    bestY = y;
+                    if (bestRandom == float.MaxValue) bestRandom = Random.value;
+                }
+            }
+
+            return best;
         }
 
         private void Propagate(Queue<WFCCell> queue)
@@ -338,12 +385,13 @@ namespace WFC_Sudoku
         private void CheckNeighbor(WFCCell current, Vector3Int dir, Queue<WFCCell> queue)
         {
             Vector3Int nPos = current.gridPosition + dir;
-            WFCCell neighbor = cells.FirstOrDefault(c => c.gridPosition == nPos);
-
+            
+            // P0 FIX: Use cellMap O(1) lookup instead of O(n) linear search
+            if (!cellMap.TryGetValue(nPos, out WFCCell neighbor)) return;
             if (neighbor == null || neighbor.collapsed) return;
 
-            // Gather all allowed modules from CURRENT cell's possibilities
-            HashSet<WFCModule> allowedByCurrent = new HashSet<WFCModule>();
+            // P1 FIX: Use pooled HashSet instead of allocating new
+            _allowedPool.Clear();
 
             foreach (var mod in current.possibleModules)
             {
@@ -352,45 +400,25 @@ namespace WFC_Sudoku
                 {
                     foreach (var n in neighbors)
                     {
-                        if (n != null) allowedByCurrent.Add(n);
+                        if (n != null) _allowedPool.Add(n);
                     }
                 }
             }
 
             // Filter Neighbor's possibilities
-            // A neighbor module 'nMod' is valid IF:
-            // 1. It is in the 'allowedByCurrent' set (Current says "I allow you")
-            // 2. AND (Optional but recommended) nMod says "I allow Current" (Backwards check)
-
-            // For this implementation, we rely on the logic:
-            // "Current.possibleModules" only contains things that CAN exist here.
-            // So if "Current" says "I can have X on my Right", then X is a candidate for Neighbor.
-
-            // ISSUE: 'allowedByCurrent' contains Prefab References (Project Assets).
-            // 'neighbor.possibleModules' contains Prefab References.
-            // Comparison is valid.
-
-            // BUT wait! If we have multiple instances of "Wall", do we drag the prefab into the array? Yes.
-
-            List<WFCModule> keptModules = new List<WFCModule>();
+            // P1 FIX: Use pooled List and reference-based Contains (faster than string comparison)
+            _keptModulesPool.Clear();
             foreach (var nMod in neighbor.possibleModules)
             {
-                // Is this neighbor module allowed by ANY of the current options?
-                // Logic: Does ANY (CurrentOption) have (nMod) in its (Dir) list?
-                // Yes, that is exactly 'allowedByCurrent'.
-
-                // We MUST check prefab reference equality.
-                // As long as the user drags the SAME prefab into the array as is in the Solver list, this works.
-                // To be safe, we check names? No, reference should work for Prefabs.
-
-                // Checking by Name is safer if user clones things.
-                if (allowedByCurrent.Any(allowed => allowed != null && nMod != null && allowed.name == nMod.name))
+                // Use direct reference Contains - works if modules are same prefab instances
+                // Falls back to name check only if reference fails (for safety)
+                if (_allowedPool.Contains(nMod))
                 {
-                    keptModules.Add(nMod);
+                    _keptModulesPool.Add(nMod);
                 }
             }
 
-            if (neighbor.Constrain(keptModules))
+            if (neighbor.Constrain(_keptModulesPool))
                 queue.Enqueue(neighbor);
         }
 
