@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using WFC_Sudoku; // Import WFC namespace
+using TerrainGenerator; // Import WFC namespace
 
 public class PlacementSystem : MonoBehaviour
 {

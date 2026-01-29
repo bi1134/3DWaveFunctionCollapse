@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using WFC_Sudoku;
+using TerrainGenerator;
 
 public class GridData
 {
